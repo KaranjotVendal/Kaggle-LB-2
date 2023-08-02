@@ -1,0 +1,8 @@
+{
+    "DATA_PATH":"./input/",
+    "TRAIN_DATA_PATH": "./input/reduced_dataset/", 
+    "TEST_DATA_PATH": "./input/reduced_dataset/", 
+    "MODEL_CHECKPOINT_DIR": "./models/weights", 
+    "PRETRAINED_CHECKPOINT_PATH": "./input/efficientnet/efficientnet-b0-08094119.pth", 
+    "SUBMISSION_DIR": "./"
+}
