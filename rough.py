@@ -1,111 +1,73 @@
-from torch.utils.data import Dataset
-import random
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+
 import torch
-import glob
-import os
+import torchmetrics
+from tqdm import tqdm
+import wandb
 
-from utils import load_image, uniform_temporal_subsample
-
-class DataRetriever(Dataset):
-    def __init__(self, patient_path, paths, targets, n_frames, img_size, transform=None):
-        #(self, './input/reduced_dataset/', t['xtrain'],t['ytrain'], 10, 112, transform)
-        self.patient_path = patient_path
-        self.paths = paths
-        self.targets = targets
-        self.n_frames = n_frames
-        self.img_size = img_size
-        self.transform = transform
-          
-    def __len__(self):
-        return len(self.paths)
-    
-    def read_video(self, vid_paths):
-        video = [load_image(path, (self.img_size, self.img_size)) for path in vid_paths]
-        if self.transform:
-            seed = random.randint(0,99999)
-            for i in range(len(video)):
-                random.seed(seed)
-                video[i] = self.transform(image=video[i])["image"]
-        
-        video = [torch.tensor(frame, dtype=torch.float32) for frame in video]
-        if len(video)==0:
-            video = torch.zeros(self.n_frames, self.img_size, self.img_size)
-        else:
-            video = torch.stack(video) # T * C * H * W
-        return video
-    
-    def __getitem__(self, index):
-        _id = self.paths[index]
-        patient_path = os.path.join(self.patient_path, f'{str(_id).zfill(5)}/')
-
-        channels = []
-        for t in ["FLAIR", "T1w", "T1wCE", "T2w"]:
-            t_paths = sorted(
-                glob.glob(os.path.join(patient_path, t, "*")), 
-                key=lambda x: int(x[:-4].split("-")[-1]),
-            )
-            num_samples = self.n_frames
-            if len(t_paths) < num_samples:
-                in_frames_path = t_paths
-            else:
-                in_frames_path = uniform_temporal_subsample(t_paths, num_samples)
+def test(self, test_loader):
+        test_time = time.time()
+        test_loss = self.loss_meter()
+        test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=2).to(self.device)
+        test_f1 = torchmetrics.F1Score(task="multiclass", num_classes=2, average='macro').to(self.device)       
+        test_auroc = torchmetrics.AUROC(task="multiclass", num_classes=2).to(self.device)
+        test_pred = []
+        test_targets = []
+        for idx, batch in enumerate(test_loader):
             
-            channel = self.read_video(in_frames_path)
-            if channel.shape[0] == 0:
-                channel = torch.zeros(num_samples, self.img_size, self.img_size)
-            channels.append(channel)
-            
-        channels = torch.stack(channels).transpose(0,1)
-        y = torch.tensor(self.targets[index], dtype=torch.float)
-        return {"X": channels.float(), "y": y}
+            self.model.eval()
+            with torch.no_grad():
+                features = batch['X'].to(self.device)
+                targets = batch['y'].to(self.device)
+                
+                org = batch['org']
+                print(org)
+                
+                logits, probs = self.model(features, org)
+                test_pred.append(probs)
+                test_targets.append(targets)
+        
+        test_pred = test_pred.flatten
 
-class TestDataRetriever(Dataset):
-    def __init__(self, patient_path, paths, n_frames, img_size, transform=None):
-        self.patient_path = patient_path
-        self.paths = paths
-        self.n_frames = n_frames
-        self.img_size = img_size
-        self.transform = transform
-          
-    def __len__(self):
-        return len(self.paths)
-    
-    def read_video(self, vid_paths):
-        
-        video = [load_image(path, (self.img_size, self.img_size)) for path in vid_paths]
-        if self.transform:
-            seed = random.randint(0,99999)
-            for i in range(len(video)):
-                random.seed(seed)
-                video[i] = self.transform(image=video[i])["image"]
-        
-        video = [torch.tensor(frame, dtype=torch.float32) for frame in video]
-        if len(video)==0:
-            video = torch.zeros(self.n_frames, self.img_size, self.img_size)
-        else:
-            video = torch.stack(video) # T * C * H * W
-        return video
-    
-    def __getitem__(self, index):
-        _id = self.paths[index]
-        patient_path = os.path.join(self.patient_path, f'{str(_id).zfill(5)}/')
-        channels = []
-        for t in ["FLAIR","T1w", "T1wCE", "T2w"]:
-            t_paths = sorted(
-                glob.glob(os.path.join(patient_path, t, "*")), 
-                key=lambda x: int(x[:-4].split("-")[-1]),
-            )
-            num_samples = self.n_frames
-            if len(t_paths) < num_samples:
-                in_frames_path = t_paths
-            else:
-                in_frames_path = uniform_temporal_subsample(t_paths, num_samples)
+                
+                #loss = self.criterion(logits, targets)
             
-            channel = self.read_video(in_frames_path)
-            if channel.shape[0] == 0:
-                print("1 channel empty")
-                channel = torch.zeros(num_samples, self.img_size, self.img_size)
-            channels.append(channel)
+                
+                
+                #test_loss.update(loss.detach().item())
+                #test_acc.update(probs.detach(), targets)
+                #test_f1.update(probs.detach(), targets)
+                #test_auroc.update(probs.detach(), targets)
+                print('------BATCH ENDING-------')
+
+            _loss = test_loss.avg
+            _acc = test_acc.compute()
+            _f1 = test_f1.compute()
+            _roc = test_auroc.compute()
+
+            wandb.log({'test loss': _loss,
+                      'test acc': _acc,
+                      'test f1_score': _f1,
+                      'test AUROC': _roc
+                     })
+    
+            #test_acc.reset()
+            #test_f1.reset()
+            #test_auroc.reset()
+            
+            ##self.hist['test_loss'].append(_loss)
+            #self.hist['test_acc'].append(_acc)
+            ##self.hist['test_f1'].append(_f1)
+            #self.hist['test_auroc'].append(_roc)
+            
+
+        avg_loss = torch.mean(torch.tensor(self.hist['test_loss']))
+        avg_acc = torch.mean(torch.tensor(self.hist['test_acc']))
+        avg_f1 = torch.mean(torch.tensor(self.hist['test_f1']))
+        avg_auroc = torch.mean(torch.tensor(self.hist['test_auroc']))
+
+        print(f"Testing Time: {(time.time() - test_time)/60:.2f} min | Avg Loss: {avg_loss:.5f} | Avg Accuracy: {avg_acc:.2f}% | Avg F1 Score: {avg_f1:.4f} | Avg AUROC: {avg_auroc:.4f}")
         
-        channels = torch.stack(channels).transpose(0,1)
-        return {"X": channels.float(), "id": _id}
+        return avg_loss, avg_acc, avg_f1, avg_auroc
