@@ -137,13 +137,13 @@ def main(device, settings):
     '''wandb.log({
          'Avg Test f1 score': np.mean(test_fscore),
          'Avg Train f1 score': np.mean(f_scores)
-         })
+         })'''
     print('\nTraining complete in {:.0f}m {:.0f}s'.format(elapsed_time // 60, elapsed_time % 60))
     '''
     #print('Avg loss {:.5f}'.format(np.mean(losses)))
     #print('Avg score {:.5f}'.format(np.mean(scores)))
     #print('Avg Train f1_score {:.5f}'.format(np.mean(f_scores)))
-    #print('Avg Test f1_score {:.5f}'.format(np.mean(test_fscore)))
+    #print('Avg Test f1_score {:.5f}'.format(np.mean(test_fscore)))'''
 
     
     wandb.finish()
