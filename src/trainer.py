@@ -2,7 +2,6 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-from sklearn.metrics import f1_score
 import torchmetrics
 
 import wandb
@@ -91,6 +90,7 @@ class Trainer:
                 self.best_f_score = valid_f_score
                 self.best_valid_auroc = valid_auroc
                 self.save_model(n_epoch, save_path)
+                print('checkpoint saved at {save_path}')
                 self.n_patience = 0
             else:
                 self.n_patience += 1
@@ -148,9 +148,9 @@ class Trainer:
         self.model.eval()
         t = time.time()
         valid_loss = self.loss_meter()
-        test_acc = torchmetrics.Accuracy(task="binary").to(self.device)
-        test_f1 = torchmetrics.F1Score(task="binary").to(self.device)       
-        test_auroc = torchmetrics.AUROC(task="binary").to(self.device)
+        val_acc = torchmetrics.Accuracy(task="binary").to(self.device)
+        val_f1 = torchmetrics.F1Score(task="binary").to(self.device)       
+        val_auroc = torchmetrics.AUROC(task="binary").to(self.device)
 
         test_targets = []
         preds = []
@@ -172,9 +172,9 @@ class Trainer:
         preds = torch.cat(preds)
 
         _loss = valid_loss.avg
-        acc = test_acc(preds, test_targets)
-        f1 = test_f1(preds, test_targets)
-        auroc = test_auroc(preds, test_targets)              
+        acc = val_acc(preds, test_targets)
+        f1 = val_f1(preds, test_targets)
+        auroc = val_auroc(preds, test_targets)              
                 
         #message = 'Valid Step {}/{}, valid_loss: {:.5f}, valid_score: {:.5f}, valid_f1: {:.5f}'
         #self.info_message(message, step, len(valid_loader), _loss, _score, f_score, end="\r")

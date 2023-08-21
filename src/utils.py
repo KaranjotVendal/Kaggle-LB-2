@@ -5,7 +5,6 @@ import numpy as np
 import cv2
 #import pydicom
 import json
-from torchmetrics import F1Score
 
 
 def seed_everything(seed):
@@ -79,19 +78,35 @@ class AccMeter:
         # incremental update
         self.avg = true_count / self.n + last_n / self.n * self.avg
 
-class F1score:
-    def __init__(self):
-        self.fscore = F1Score(task='binary', num_classes=2).to(device='cuda')
-        self.f = []
+def update_metrics(metrics, fold, dataset_type, metric_name, value):
+    if fold not in metrics:
+        metrics[fold] = {}
+    
+    if dataset_type not in metrics[fold]:
+        metrics[fold][dataset_type] = {}
+    
+    if metric_name not in metrics[fold][dataset_type]:
+        metrics[fold][dataset_type][metric_name] = []
 
-    def update(self, ytrue, ypred):
-        f_score = self.fscore(ypred, ytrue)
-        f_score=f_score.item()
-        self.f.append(f_score)
+    metrics[fold][dataset_type][metric_name].append(value)
 
-        return f_score
+class TensorEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, torch.Tensor):
+            return obj.tolist()
+        return super().default(obj)
 
-    def get_score(self):
-        score = np.mean(self.f)
 
-        return score
+def save_metrics_to_json(metrics, model_name, encoder=TensorEncoder):
+    base_dir = './plots'
+    save_path = os.path.join(base_dir, model_name)
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+
+    filename = f"metrics_{model_name}.json"
+    full_path = os.path.join(save_path, filename)
+    with open(full_path, "w") as file:
+        json.dump(metrics, file, cls=encoder)
+    
+    print(f'Saving {filename}')
+    return full_path
