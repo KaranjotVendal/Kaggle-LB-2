@@ -3,7 +3,6 @@ import os
 import random
 import numpy as np
 import cv2
-#import pydicom
 import json
 
 
@@ -42,16 +41,6 @@ def uniform_temporal_subsample(x, num_samples):
     indices = torch.linspace(0, t - 1, num_samples)
     indices = torch.clamp(indices, 0, t - 1).long()
     return [x[i] for i in indices]
-'''
-def load_dicom(path, img_size):
-    dicom = pydicom.read_file(path)
-    data = dicom.pixel_array
-    data = data - np.min(data)
-    if np.max(data) != 0:
-        data = data / np.max(data)
-        
-    data = np.float32(cv2.resize(data, (img_size, img_size)))
-    return torch.tensor(data)'''
 
 class LossMeter:
     def __init__(self):

@@ -1,10 +1,9 @@
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import torchmetrics
-
 import wandb
+from config import CFG
 
 class Trainer:
     def __init__(
@@ -63,7 +62,8 @@ class Trainer:
             self.hist['val_auroc'].append(valid_f_score)
             self.hist['train_auroc'].append(train_f_score)
             
-            wandb.log({'val_loss': valid_loss,
+            if CFG.WANDB:
+                wandb.log({'val_loss': valid_loss,
                         'val_acc': valid_score,
                         'val_f1': valid_f_score,
                         'val_auroc': valid_auroc,
@@ -90,7 +90,7 @@ class Trainer:
                 self.best_f_score = valid_f_score
                 self.best_valid_auroc = valid_auroc
                 self.save_model(n_epoch, save_path)
-                print('checkpoint saved at {save_path}')
+                print(f'checkpoint saved at {save_path}')
                 self.n_patience = 0
             else:
                 self.n_patience += 1
@@ -99,9 +99,6 @@ class Trainer:
                 self.info_message(self.messages["patience"], patience)
                 break
 
-        #valid_loss, valid_score, valid_time, valid_f_score = self.valid_epoch(valid_loader)
-                
-        return self.best_valid_loss, self.best_valid_score, self.best_f_score
             
     def train_epoch(self, train_loader):
         self.model.train()
@@ -126,10 +123,7 @@ class Trainer:
             train_auroc.update(outputs.detach(), targets)
                 
             self.optimizer.step()
-            
-            #message = 'Train Step {}/{}, train_loss: {:.5f}, train_score: {:.5f}, train_f1: {:.5f}'
-            #self.info_message(message, step, len(train_loader), _loss, _score, ff, end="\r")
-    
+           
         _loss = train_loss.avg
         _acc = train_acc.compute()
         _f1 = train_f1.compute()
@@ -140,8 +134,6 @@ class Trainer:
         train_f1.reset()
         train_auroc.reset()
           
-        #_loss, _score = train_loss.avg, train_score.avg
-        
         return _loss, _acc, _f1, _roc, int(time.time() - t)
     
     def valid_epoch(self, valid_loader):
@@ -176,43 +168,8 @@ class Trainer:
         f1 = val_f1(preds, test_targets)
         auroc = val_auroc(preds, test_targets)              
                 
-        #message = 'Valid Step {}/{}, valid_loss: {:.5f}, valid_score: {:.5f}, valid_f1: {:.5f}'
-        #self.info_message(message, step, len(valid_loader), _loss, _score, f_score, end="\r")
-        
         return _loss, acc, f1, auroc, int(time.time() - t)
     
-    def plot_loss(self):
-        plt.title("Loss")
-        plt.xlabel("Training Epochs")
-        plt.ylabel("Loss")
-
-        plt.plot(self.hist['train_loss'], label="Train")
-        #plt.plot(self.hist['val_loss'], label="Validation")
-        plt.legend()
-        plt.savefig(f"./plots/loss/loss_{self.fold}.png")
-        #plt.show()
-    
-    def plot_score(self):
-        plt.title("Score")
-        plt.xlabel("Training Epochs")
-        plt.ylabel("Acc")
-
-        plt.plot(self.hist['train_score'], label="Train")
-        #plt.plot(self.hist['val_score'], label="Validation")
-        plt.legend()
-        plt.savefig(f"./plots/score/score_{self.fold}.png")
-        #plt.show()
-
-    def plot_fscore(self):
-        plt.title("f1_score")
-        plt.xlabel("Training Epochs")
-        plt.ylabel("f1_score")
-
-        plt.plot(self.hist['train_f1'], label="Train")
-        #plt.plot(self.hist['val_f1'], label="Validation")
-        plt.legend()
-        plt.savefig(f"./plots/f1_score/f1_score_{self.fold}.png")
-        #plt.show()
     
     def save_model(self, n_epoch, save_path):
         torch.save(

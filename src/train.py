@@ -13,24 +13,25 @@ from model import Model
 from config import CFG
 from utils import LossMeter, AccMeter, seed_everything, get_settings, update_metrics, save_metrics_to_json
 from trainer import Trainer
-from data_retriever import DataRetriever, TestDataRetriever
+from data_retriever import DataRetriever
 from eval import evaluate
 from plotting import plot_train_valid_fold, plot_trian_valid_all_fold, plot_test_metrics
 
-import wandb
-wandb.login(key='a2a7828ed68b3cba08f2703971162138c680b664')
+if CFG.WANDB:
+    import wandb
+    wandb.login(key='a2a7828ed68b3cba08f2703971162138c680b664')
 
-r ="baseline"
-run = wandb.init(
-      project="Kaggle LB-2 sanity check", 
-      name=f"experiment_{r}", 
-      config={
-      "learning_rate": 0.0001,
-      "architecture": "CNN-LSTM",
-      "dataset": "MICAA MRI",
-      "epochs": CFG.n_epochs,
-      "batch size": CFG.batch_size
-      })
+    r ="baseline"
+    run = wandb.init(
+        project="Kaggle LB-2 sanity check", 
+        name=f"experiment_{r}", 
+        config={
+        "learning_rate": 0.0001,
+        "architecture": "CNN-LSTM",
+        "dataset": "MICAA MRI",
+        "epochs": CFG.n_epochs,
+        "batch size": CFG.batch_size
+        })
     
 
 def main(device, settings):
@@ -60,8 +61,7 @@ def main(device, settings):
                                 A.RandomBrightnessContrast(p=0.5),
                             ])
     skf = StratifiedKFold(n_splits=CFG.n_fold)
-    #t = df['MGMT_value']
-
+    
     start_time = time.time()
     
     fold_acc = []
@@ -131,7 +131,6 @@ def main(device, settings):
             fold
         )
         
-        #loss, score, f_score = 
         trainer.fit(
             CFG.n_epochs, 
             train_loader, 
@@ -210,16 +209,17 @@ def main(device, settings):
     print('\nStd F1 score:', np.std(np.array(fold_f1)))
     print('\nAVG performance of model:', np.mean(np.array(fold_f1)))
 
-    wandb.log({
+    if CFG.WANDB:
+        wandb.log({
         'Avg performance': np.mean(np.array(fold_f1)),
         'Std f1 score': np.std(np.array(fold_f1))
-    })
+        })
     
-    wandb.finish()
+        wandb.finish()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--setting-path', default='../settings/SETTINGS_kaggle.json')
+    parser.add_argument('--setting-path', default='./settings/SETTINGS_kaggle.json')
     parser.add_argument('--seed', type=int, default=123)
     args = parser.parse_args()
 

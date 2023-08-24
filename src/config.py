@@ -1,4 +1,6 @@
 class CFG:
+    WANDB = True
+    
     img_size = 112
     n_frames = 10
     

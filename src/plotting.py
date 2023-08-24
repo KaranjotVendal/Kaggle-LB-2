@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 
-from config import config
+from config import CFG
 
 def plot_metrics_from_csv(csv_path, metrics_to_plot=['loss', 'f1', 'auroc'], datasets_to_plot=['train', 'valid', 'test'], folds_to_plot=None):
     df = pd.read_csv(csv_path)
@@ -70,7 +70,7 @@ def plot_train_valid_fold(json_path, metrics):
         metrics_json = json.load(file)    
     
     base_dir = './plots'
-    model_dir = os.path.join(base_dir, config.MODEL)
+    model_dir = os.path.join(base_dir, 'efficientb0')
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
 
@@ -104,7 +104,7 @@ def plot_trian_valid_all_fold(json_path, metrics):
         metrics_json = json.load(file)    
 
     base_dir = './plots'
-    model_dir = os.path.join(base_dir, config.MODEL)
+    model_dir = os.path.join(base_dir, 'efficientb0')
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
 
@@ -147,5 +147,5 @@ def plot_test_metrics(json_filepath, metric_name):
     plt.xticks(folds)  # This ensures each fold is shown on the x-axis
     plt.grid(True)#, which='both', linestyle='--', linewidth=0.5)
     plt.tight_layout()
-    plt.savefig(f'./plots/{config.MODEL}/test_{metric_name}_plot.png')
+    plt.savefig(f'./plots/efficientb0/test_{metric_name}_plot.png')
     plt.close()
