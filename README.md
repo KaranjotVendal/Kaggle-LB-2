@@ -14,6 +14,8 @@ If you want to run locally, there are certain steps you need to make:
 1. Install dependencies via `pip install - r requirements.txt`
 2. Download processed train dataset from [here](https://www.kaggle.com/jonathanbesomi/rsna-miccai-png). This is a cleaned PNG public dataset of the competition, we use this dataset in the training phase
 3. Download the [dataset](https://drive.google.com/file/d/1b1cbJojNYjCLrxbz0KG8ca3tiYPt_3B0/view?usp=sharing)
+   - [train labels](https://drive.google.com/file/d/1rCqwfbEKd9ICnRhwwq5H81ZHfYos0Yex/view?usp=drive_link)
+
 4. Download pretrained EfficientNet-B0 weights [here](https://www.kaggle.com/hmendonca/efficientnet-pytorch). 
 5. Change/create a setting json file that has the following keys:
 
