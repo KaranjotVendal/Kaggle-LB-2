@@ -15,7 +15,7 @@ from utils import LossMeter, AccMeter, seed_everything, get_settings, update_met
 from trainer import Trainer
 from data_retriever import DataRetriever
 from eval import evaluate
-from plotting import plot_train_valid_fold, plot_trian_valid_all_fold, plot_test_metrics
+from plotting import plot_train_valid_fold, plot_train_valid_all_fold, plot_test_metrics
 
 if CFG.WANDB:
     import wandb
@@ -23,7 +23,7 @@ if CFG.WANDB:
 
     r ="baseline"
     run = wandb.init(
-        project="Kaggle LB-2 sanity check", 
+        project="Kaggle LB-2", 
         name=f"experiment_{r}", 
         config={
         "learning_rate": 0.0001,
@@ -60,7 +60,7 @@ def main(device, settings):
                                 ),
                                 A.RandomBrightnessContrast(p=0.5),
                             ])
-    skf = StratifiedKFold(n_splits=CFG.n_fold)
+    skf = StratifiedKFold(n_splits=CFG.n_fold, shuffle=True, random_state=123)
     
     start_time = time.time()
     
@@ -181,22 +181,22 @@ def main(device, settings):
     
     #plotting loss
     plot_train_valid_fold(json_path, 'loss')
-    plot_trian_valid_all_fold(json_path, 'loss')
+    plot_train_valid_all_fold(json_path, 'loss')
     
     #plotting acc
     plot_train_valid_fold(json_path, 'acc')
-    plot_trian_valid_all_fold(json_path, 'acc')
+    plot_train_valid_all_fold(json_path, 'acc')
     plot_test_metrics(json_path, 'acc')
 
 
     #plotting f1
     plot_train_valid_fold(json_path, 'f1')
-    plot_trian_valid_all_fold(json_path, 'f1')
+    plot_train_valid_all_fold(json_path, 'f1')
     plot_test_metrics(json_path, 'f1')
 
     #plotting auroc
     plot_train_valid_fold(json_path, 'auroc')
-    plot_trian_valid_all_fold(json_path, 'auroc')
+    plot_train_valid_all_fold(json_path, 'auroc')
     plot_test_metrics(json_path, 'auroc')
    
     elapsed_time = time.time() - start_time
@@ -211,8 +211,12 @@ def main(device, settings):
 
     if CFG.WANDB:
         wandb.log({
-        'Avg performance': np.mean(np.array(fold_f1)),
-        'Std f1 score': np.std(np.array(fold_f1))
+        'Avg performance F1': np.mean(np.array(fold_f1)),
+        'Std f1 score': np.std(np.array(fold_f1)),
+        'Avg performance acc': np.mean(np.array(fold_acc)),
+        'Std acc score': np.std(np.array(fold_acc)),
+        'Avg performance auroc': np.mean(np.array(fold_auroc)),
+        'Std auroc score': np.std(np.array(fold_auroc)),
         })
     
         wandb.finish()
