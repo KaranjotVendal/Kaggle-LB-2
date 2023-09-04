@@ -70,7 +70,10 @@ def plot_train_valid_fold(json_path, metrics):
         metrics_json = json.load(file)    
     
     base_dir = './plots'
-    model_dir = os.path.join(base_dir, 'efficientb0')
+    if not os.path.exists(base_dir):
+        os.mkdir(base_dir)
+
+    model_dir = os.path.join(base_dir, 'efficientb0_lstm')
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
 
@@ -81,10 +84,7 @@ def plot_train_valid_fold(json_path, metrics):
     for fold, data in metrics_json.items():
         plt.figure(figsize=(10, 5))
         
-        # Plotting training AUROC
         plt.plot(data['train'][metrics], label='Train {metrics}', marker = 'o')
-        
-        # Plotting validation AUROC
         plt.plot(data['valid'][metrics], label='Valid {metrics}', marker = 'o')
         
         plt.title(f'Fold {fold} - Train & Valid {metrics}')
@@ -92,19 +92,23 @@ def plot_train_valid_fold(json_path, metrics):
         plt.ylabel(metrics)
         plt.legend()
         plt.grid(True)
+        plt.tight_layout()
 
         save_path = os.path.join(fld_dir, f"train_valid_{metrics}_fold_{fold}.png")
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=300)
         plt.close()
 
 
 
-def plot_trian_valid_all_fold(json_path, metrics):
+def plot_train_valid_all_fold(json_path, metrics):
     with open(json_path, "r") as file:
         metrics_json = json.load(file)    
 
     base_dir = './plots'
-    model_dir = os.path.join(base_dir, 'efficientb0')
+    if not os.path.exists(base_dir):
+        os.mkdir(base_dir)
+
+    model_dir = os.path.join(base_dir, 'efficientb0_lstm')
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
 
@@ -114,38 +118,36 @@ def plot_trian_valid_all_fold(json_path, metrics):
 
     plt.figure(figsize=(12, 6))
     for fold, data in metrics_json.items():
-        plt.plot(data['train'][metrics], label=f'Train Loss Fold {fold}', marker = 'o')
-        plt.plot(data['valid'][metrics], linestyle='dashed', label=f'Valid Loss Fold {fold}', marker = 'o')
+        plt.plot(data['train'][metrics], label=f'Train {metrics} Fold {fold}', marker = 'o')
+        plt.plot(data['valid'][metrics], linestyle='dashed', label=f'Valid {metrics} Fold {fold}', marker = 'o')
 
-    plt.title(f'Train & Valid {metrics} Across All Folds')
+    plt.title(f'Train & Valid {metrics} across All Folds')
     plt.xlabel('Epochs')
     plt.ylabel(metrics)
     plt.legend()
     plt.grid(True)
+    plt.tight_layout()
 
     save_dir = os.path.join(all_fld_dir, f"train_valid_{metrics}.png")
-    plt.savefig(save_dir)
+    plt.savefig(save_dir, dpi=300)
     plt.close()
 
 
 def plot_test_metrics(json_filepath, metric_name):
     dataset_type = 'test'
-    # Load the metrics from the JSON file
     with open(json_filepath, "r") as file:
         metrics_dict = json.load(file)
     
-    # Extract the specified metric for each fold
     folds = sorted(list(metrics_dict.keys()), key=int)  # Ensure the folds are in numerical order
     metric_values = [metrics_dict[fold][dataset_type][metric_name][0] for fold in folds]
     
-    # Plot the metric values
     plt.figure(figsize=(10, 6))
     plt.plot(folds, metric_values, marker='o', linestyle='-')
     plt.xlabel("Folds")
     plt.ylabel(f"{metric_name.capitalize()} Score")
-    plt.title(f"{metric_name.capitalize()} Score w.r.t Folds for {dataset_type.capitalize()} Dataset")
+    plt.title(f"{metric_name.capitalize()} Score w.r.t Folds")
     plt.xticks(folds)  # This ensures each fold is shown on the x-axis
     plt.grid(True)#, which='both', linestyle='--', linewidth=0.5)
     plt.tight_layout()
-    plt.savefig(f'./plots/efficientb0/test_{metric_name}_plot.png')
+    plt.savefig(f'./plots/efficientb0_lstm/test_{metric_name}_plot.png', dpi=300)
     plt.close()

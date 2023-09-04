@@ -59,8 +59,8 @@ class Trainer:
             self.hist['train_acc'].append(train_score)
             self.hist['val_f1'].append(valid_f_score)
             self.hist['train_f1'].append(train_f_score)
-            self.hist['val_auroc'].append(valid_f_score)
-            self.hist['train_auroc'].append(train_f_score)
+            self.hist['val_auroc'].append(valid_auroc)
+            self.hist['train_auroc'].append(train_auroc)
             
             if CFG.WANDB:
                 wandb.log({'val_loss': valid_loss,

@@ -1,8 +1,10 @@
+import torch 
+
 class CFG:
     WANDB = True
     
     img_size = 112
-    n_frames = 10
+    n_frames = 5
     
     cnn_features = 256
     lstm_hidden = 32

@@ -10,7 +10,7 @@ import wandb
 def evaluate(model, test_loader, fold, mod, device):
     test_time = time.time()
 
-    checkpoint = torch.load(f'./models/weights/Efficientb0_{mod}_{fold}.pth')
+    checkpoint = torch.load(f'./models/weights/Efficientb0_lstm_{mod}_{fold}.pth')
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
     
