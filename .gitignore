@@ -3,5 +3,6 @@ src/__pycache__
 
 /.vscode
 
+/plots/
 rough.ipynb
 rough.py
